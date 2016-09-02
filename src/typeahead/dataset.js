@@ -152,6 +152,7 @@ var Dataset = (function() {
       function render(suggestions) {
         // if the update has been canceled or if the query has changed
         // do not render the suggestions as they've become outdated
+        that.trigger('dataReceived', suggestions);
         if (!that.canceled && query === that.query) {
           that._render(query, suggestions);
         }

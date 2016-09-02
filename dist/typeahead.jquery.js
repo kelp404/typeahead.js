@@ -1,7 +1,7 @@
 /*!
  * typeahead.js 0.10.5
  * https://github.com/twitter/typeahead.js
- * Copyright 2013-2014 Twitter, Inc. and other contributors; Licensed MIT
+ * Copyright 2013-2016 Twitter, Inc. and other contributors; Licensed MIT
  */
 
 (function($) {
@@ -642,6 +642,7 @@
                 this.canceled = false;
                 this.source(query, render);
                 function render(suggestions) {
+                    that.trigger("dataReceived", suggestions);
                     if (!that.canceled && query === that.query) {
                         that._render(query, suggestions);
                     }
@@ -703,6 +704,7 @@
             _.each(this.datasets, function(dataset) {
                 that.$menu.append(dataset.getRoot());
                 dataset.onSync("rendered", that._onRendered, that);
+                dataset.onSync("dataReceived", that._onDataReceived, that);
             });
         }
         _.mixin(Dropdown.prototype, EventEmitter, {
@@ -723,6 +725,9 @@
                 function isDatasetEmpty(dataset) {
                     return dataset.isEmpty();
                 }
+            },
+            _onDataReceived: function onReceived(event, suggestions) {
+                this.trigger("dataReceived", suggestions);
             },
             _hide: function() {
                 this.$menu.hide();
@@ -817,6 +822,7 @@
             },
             update: function update(query) {
                 _.each(this.datasets, updateDataset);
+                this.trigger("queryUpdated", query);
                 function updateDataset(dataset) {
                     dataset.update(query);
                 }
@@ -883,7 +889,7 @@
             this.dropdown = new Dropdown({
                 menu: $menu,
                 datasets: o.datasets
-            }).onSync("suggestionClicked", this._onSuggestionClicked, this).onSync("cursorMoved", this._onCursorMoved, this).onSync("cursorRemoved", this._onCursorRemoved, this).onSync("opened", this._onOpened, this).onSync("closed", this._onClosed, this).onAsync("datasetRendered", this._onDatasetRendered, this);
+            }).onSync("suggestionClicked", this._onSuggestionClicked, this).onSync("cursorMoved", this._onCursorMoved, this).onSync("cursorRemoved", this._onCursorRemoved, this).onSync("opened", this._onOpened, this).onSync("closed", this._onClosed, this).onSync("queryUpdated", this._onQueryUpdated, this).onAsync("dataReceived", this._onDataReceived, this).onAsync("datasetRendered", this._onDatasetRendered, this);
             this.input = new Input({
                 input: $input,
                 hint: $hint
@@ -906,6 +912,9 @@
                 this.input.resetInputValue();
                 this._updateHint();
             },
+            _onDataReceived: function onDataReceived(event, suggestions) {
+                this.eventBus.trigger("datareceived", suggestions);
+            },
             _onDatasetRendered: function onDatasetRendered() {
                 this._updateHint();
             },
@@ -916,6 +925,9 @@
             _onClosed: function onClosed() {
                 this.input.clearHint();
                 this.eventBus.trigger("closed");
+            },
+            _onQueryUpdated: function onQueryUpdated(event, query) {
+                this.eventBus.trigger("queryupdated", query);
             },
             _onFocused: function onFocused() {
                 this.isActivated = true;

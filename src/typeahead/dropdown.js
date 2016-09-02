@@ -38,6 +38,7 @@ var Dropdown = (function() {
     _.each(this.datasets, function(dataset) {
       that.$menu.append(dataset.getRoot());
       dataset.onSync('rendered', that._onRendered, that);
+      dataset.onSync('dataReceived', that._onDataReceived, that);
     });
   }
 
@@ -69,6 +70,10 @@ var Dropdown = (function() {
       this.trigger('datasetRendered');
 
       function isDatasetEmpty(dataset) { return dataset.isEmpty(); }
+    },
+
+    _onDataReceived: function onReceived(event, suggestions) {
+      this.trigger('dataReceived', suggestions);
     },
 
     _hide: function() {
@@ -209,6 +214,7 @@ var Dropdown = (function() {
     update: function update(query) {
       _.each(this.datasets, updateDataset);
 
+      this.trigger('queryUpdated', query);
       function updateDataset(dataset) { dataset.update(query); }
     },
 
